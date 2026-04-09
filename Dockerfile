@@ -37,10 +37,9 @@ LABEL org.opencontainers.image.source=https://github.com/Donkie/Spoolman
 LABEL org.opencontainers.image.description="Keep track of your inventory of 3D-printer filament spools."
 LABEL org.opencontainers.image.licenses=MIT
 
-# Install gosu for privilege dropping and curl for healthchecks
+# Install gosu for privilege dropping
 RUN apt-get update && apt-get install -y \
     gosu \
-    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -76,8 +75,12 @@ RUN echo "GIT_COMMIT=${GIT_COMMIT}" > build.txt \
 # Run command
 EXPOSE 8000
 
-# Add healthcheck to verify the API is responsive
+# Add healthcheck to verify the API is responsive using the internal Python interpreter
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:${SPOOLMAN_PORT:-8000}/api/v1/health || exit 1
+  CMD python3 -c "import os, urllib.request; \
+    port = os.getenv('SPOOLMAN_PORT', '8000'); \
+    base = os.getenv('SPOOLMAN_BASE_PATH', '').strip('/'); \
+    path = f'/{base}/api/v1/health'.replace('//', '/'); \
+    urllib.request.urlopen(f'http://localhost:{port}{path}')" || exit 1
 
 ENTRYPOINT ["/home/app/spoolman/entrypoint.sh"]
