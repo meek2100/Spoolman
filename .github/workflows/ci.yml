@@ -6,7 +6,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Hardcode this to be lowercase to avoid Docker build errors
+  IMAGE_NAME: meek2100/spoolman
 
 jobs:
   build-and-push:
